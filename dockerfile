@@ -6,9 +6,9 @@ RUN echo $TZ > /etc/timezone
 RUN dpkg-reconfigure -f noninteractive tzdata
 RUN echo date.timezone = $TZ > /usr/local/etc/php/conf.d/docker-php-ext-timezone.ini
 
-### Ajout user atmp dans l'image
-RUN addgroup atmp && \
-    useradd -m -d /home/atmp -g atmp atmp
+### Ajout user docker dans l'image
+RUN addgroup docker && \
+    useradd -m -d /home/docker -g docker docker
 
 ### Config apache
 RUN rm /etc/apache2/sites-enabled/000-default.conf && \
@@ -19,8 +19,6 @@ RUN apt-get update && apt-get -y install \
       build-essential \
       htop \
       libzip-dev \
-#      libcurl3 \
-#      libcurl3-dev \
       librecode0 \
       libsqlite3-0 \
       libxml2 \
@@ -54,7 +52,6 @@ RUN mkdir -p /usr/share/man/man1 && \
     apt-get install -y --no-install-recommends $PDFTK_PACKAGES && \
     rm -rf /var/lib/apt/lists/*
 
-
 # Install PHP Extension
 RUN apt-get update && apt-get install -y \
       libfreetype6-dev \
@@ -73,7 +70,6 @@ RUN apt-get update && apt-get install -y \
       libpcre3-dev \
    && docker-php-ext-install calendar bcmath intl mysqli pdo_mysql zip soap \
    && docker-php-ext-configure opcache --enable-opcache && docker-php-ext-install opcache \
-#   && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
    && docker-php-ext-configure gd \
    && docker-php-ext-install gd
 
@@ -86,13 +82,21 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 # Install composer system-wide
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
     php -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
-    php composer-setup.php --install-dir=/usr/local/bin --filename=composer --version=1.10.23 && \
-    php -r "unlink('composer-setup.php');"
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
+    php -r "unlink('composer-setup.php');" && \
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install composer global package
-RUN composer global require "fxp/composer-asset-plugin:1.4.*"
+### Install node 16 / NPM
+RUN curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh && \
+    bash nodesource_setup.sh && \
+    apt-get update && \
+    apt-get -y install nodejs
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+### Install Yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+    apt-get update && \
+    apt-get -y --no-install-recommends install yarn
 
 # set recommended PHP.ini settings
 # see https://secure.php.net/manual/en/opcache.installation.php
