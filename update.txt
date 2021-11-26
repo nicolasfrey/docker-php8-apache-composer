@@ -1,0 +1,7 @@
+$ docker build . --platform=linux
+=> Successfully built d6dc567c2a2e
+$ docker tag d6dc567c2a2e nicolasfrey/php8.0-apache-composer:0.1
+$ docker push nicolasfrey/php8.0-apache-composer:0.1
+
+# Run image
+docker run --rm -i -t ${tag} bash
