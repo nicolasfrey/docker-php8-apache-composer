@@ -1,6 +1,12 @@
 FROM php:8.0-apache
 
 ENV TZ=Europe/Paris
+
+#### Installation du certificat proxy
+RUN apt-get update && apt-get install -y ca-certificates
+COPY fortinet_CA_SSL.pem /usr/local/share/ca-certificates/fortinet_CA_SSL.crt
+RUN  update-ca-certificates
+
 # Set Server timezone.
 RUN echo $TZ > /etc/timezone
 RUN dpkg-reconfigure -f noninteractive tzdata
@@ -81,7 +87,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Install composer system-wide
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
+    php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;" && \
     php composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
     php -r "unlink('composer-setup.php');" && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -124,7 +130,7 @@ RUN { \
 } > /usr/local/etc/php/php.ini
 
 # Create Volume
-VOLUME ['/etc/apache2/sites-enabled','/var/www/html']
+VOLUME ["/etc/apache2/sites-enabled","/var/www/html"]
 
 WORKDIR /var/www/html
 
